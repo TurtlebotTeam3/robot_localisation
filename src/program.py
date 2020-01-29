@@ -7,6 +7,7 @@ from geometry_msgs.msg._Twist import Twist
 from geometry_msgs.msg._PoseWithCovarianceStamped import PoseWithCovarianceStamped
 from sensor_msgs.msg._LaserScan import LaserScan
 from std_srvs.srv import Empty, EmptyRequest
+from std_msgs.msg import Bool
 
 class LocaliseRobot:
 
@@ -32,7 +33,8 @@ class LocaliseRobot:
 
         self.localise_robot_service = rospy.Service('localise_robot_service', Localise, self._handle_localise)
 
-        #rospy.spin()
+        print("---ready---")
+        rospy.spin()
 
     def run(self):
 
@@ -46,7 +48,9 @@ class LocaliseRobot:
         Starts the localisation behaviour and retruns True when the localisation is finished
         """
         result = self._do_localisation()
-        return LocaliseResponse(result)
+        return_vel = Bool()
+        return_vel.data = result
+        return LocaliseResponse(return_vel)
         
     def _do_localisation(self): 
         # Initiate global localization, wherein all particles are dispersed randomly through the free space in the map.
@@ -130,6 +134,5 @@ class LocaliseRobot:
 if __name__ == "__main__":
     try:
         lr = LocaliseRobot()
-        lr.run()
     except rospy.ROSInterruptException:
         pass
