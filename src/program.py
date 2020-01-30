@@ -61,7 +61,7 @@ class LocaliseRobot:
         while count < 50:
             self.rate.sleep()
             count = count + 1
-
+        self._rotate_x_degrees(10, 360, True) 
         while self.area_ellips > self.epsilon:
             range_front = []
             range_front[:20] = self.lidar_data[-20:]
@@ -77,6 +77,39 @@ class LocaliseRobot:
 
         self._move(0, 0)
         return True
+    
+    def _rotate_x_degrees(self, speed_degrees_sec, rotate_in_degrees, clockwise):
+        vel_msg = Twist()
+        PI = 3.1415926535897
+
+        #Converting from angles to radians
+        angular_speed = speed_degrees_sec*2*PI/360
+        relative_angle = rotate_in_degrees*2*PI/360
+
+        vel_msg.linear.x=0
+        vel_msg.linear.y=0
+        vel_msg.linear.z=0
+        vel_msg.angular.x = 0
+        vel_msg.angular.y = 0
+
+        # Checking if our movement is CW or CCW
+        if clockwise:
+            vel_msg.angular.z = -abs(angular_speed)
+        else:
+            vel_msg.angular.z = abs(angular_speed)
+        
+        # Setting the current time for distance calculus
+        t0 = rospy.Time.now().to_sec()
+        current_angle = 0
+
+        while(current_angle < relative_angle):
+            self.velocity_publisher.publish(vel_msg)
+            t1 = rospy.Time.now().to_sec()
+            current_angle = angular_speed*(t1-t0)
+
+        #Forcing our robot to stop
+        vel_msg.angular.z = 0
+        self.velocity_publisher.publish(vel_msg)    
 
     def _is_obstacle_in_front(self):
         """
@@ -122,7 +155,7 @@ class LocaliseRobot:
         cov = data.pose.covariance
         cov = np.reshape(cov,(6,6))
 
-        a, b, deg = self._calc_ellipse(cov)
+        a, b, _ = self._calc_ellipse(cov)
 
         self.area_ellips = a * b * math.pi
 
