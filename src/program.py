@@ -56,6 +56,12 @@ class LocaliseRobot:
         # Initiate global localization, wherein all particles are dispersed randomly through the free space in the map.
         self.global_localisation()
 
+        #wait for pointcloud being destributet over the map
+        count = 0
+        while count < 50:
+            self.rate.sleep()
+            count = count + 1
+
         while self.area_ellips > self.epsilon:
             range_front = []
             range_front[:20] = self.lidar_data[-20:]
