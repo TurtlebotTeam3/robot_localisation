@@ -15,7 +15,7 @@ class LocaliseRobot:
         rospy.init_node('robot_localisation', anonymous=True)
         self.rate = rospy.Rate(20)
 
-        self.epsilon = 1.0
+        self.epsilon = 0.4
         self.area_ellips = np.Infinity
 
         self.lidar_data = []
@@ -34,7 +34,7 @@ class LocaliseRobot:
         self.localise_robot_service = rospy.Service('localise_robot_service', Localise, self._handle_localise)
 
         print("---ready---")
-        rospy.spin()
+        #rospy.spin()
 
     def run(self):
 
@@ -61,7 +61,8 @@ class LocaliseRobot:
         while count < 50:
             self.rate.sleep()
             count = count + 1
-        self._rotate_x_degrees(10, 360, True) 
+
+        move_straight_count = 0
         while self.area_ellips > self.epsilon:
             range_front = []
             range_front[:20] = self.lidar_data[-20:]
@@ -70,21 +71,27 @@ class LocaliseRobot:
             obstacle_in_front = self._is_obstacle_in_front()
             if obstacle_in_front:
                 # rotate to the right
-                self._move(0, -0.5)
+                self._move(0, -0.75)
             else:
+                if move_straight_count % 100 == 0:
+                    self._rotate_x_degrees(60, 360, True) 
+
                 # move straight forward
+                move_straight_count = move_straight_count + 1
                 self._move(0.25, 0)
 
         self._move(0, 0)
         return True
     
     def _rotate_x_degrees(self, speed_degrees_sec, rotate_in_degrees, clockwise):
+        """
+        Rotate robot
+        """
         vel_msg = Twist()
-        PI = 3.1415926535897
 
         #Converting from angles to radians
-        angular_speed = speed_degrees_sec*2*PI/360
-        relative_angle = rotate_in_degrees*2*PI/360
+        angular_speed = speed_degrees_sec*2*math.pi/360
+        relative_angle = rotate_in_degrees*2*math.pi/360
 
         vel_msg.linear.x=0
         vel_msg.linear.y=0
@@ -104,12 +111,14 @@ class LocaliseRobot:
 
         while(current_angle < relative_angle):
             self.velocity_publisher.publish(vel_msg)
+            self.rate.sleep()
             t1 = rospy.Time.now().to_sec()
             current_angle = angular_speed*(t1-t0)
 
         #Forcing our robot to stop
         vel_msg.angular.z = 0
-        self.velocity_publisher.publish(vel_msg)    
+        self.velocity_publisher.publish(vel_msg)
+        self.rate.sleep()    
 
     def _is_obstacle_in_front(self):
         """
@@ -153,11 +162,19 @@ class LocaliseRobot:
         Handles data published to the amcl_pose topic
         """
         cov = data.pose.covariance
-        cov = np.reshape(cov,(6,6))
+        if cov != None and len(data.pose.covariance) == 36:
+            try:
+                cov = np.reshape(cov,(6,6))
+                if cov.shape[0] == 6 and cov.shape[1] == 6:
+                    a, b, _ = self._calc_ellipse(cov)
 
-        a, b, _ = self._calc_ellipse(cov)
-
-        self.area_ellips = a * b * math.pi
+                    self.area_ellips = a * b * math.pi
+                else:
+                    print("shape wrong")
+            except:
+                print("covariance exception")
+        else:
+            print("wrong length of array")
 
     def _calc_ellipse(self, cov):
         """
@@ -173,5 +190,6 @@ class LocaliseRobot:
 if __name__ == "__main__":
     try:
         lr = LocaliseRobot()
+        lr.run()
     except rospy.ROSInterruptException:
         pass
