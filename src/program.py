@@ -34,7 +34,7 @@ class LocaliseRobot:
         self.localise_robot_service = rospy.Service('localise_robot_service', Localise, self._handle_localise)
 
         print("---ready---")
-        #rospy.spin()
+        rospy.spin()
 
     def run(self):
 
@@ -190,6 +190,5 @@ class LocaliseRobot:
 if __name__ == "__main__":
     try:
         lr = LocaliseRobot()
-        lr.run()
     except rospy.ROSInterruptException:
         pass
