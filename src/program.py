@@ -190,6 +190,5 @@ class LocaliseRobot:
 if __name__ == "__main__":
     try:
         lr = LocaliseRobot()
-        lr.run()
     except rospy.ROSInterruptException:
         pass
