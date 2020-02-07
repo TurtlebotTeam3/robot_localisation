@@ -34,7 +34,7 @@ class LocaliseRobot:
         self.localise_robot_service = rospy.Service('localise_robot_service', Localise, self._handle_localise)
 
         rospy.loginfo("---ready---")
-        #rospy.spin()
+        rospy.spin()
 
     def run(self):
 
