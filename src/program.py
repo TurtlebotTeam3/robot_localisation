@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 import rospy
 import numpy as np
 import math
@@ -170,11 +171,11 @@ class LocaliseRobot:
 
                     self.area_ellips = a * b * math.pi
                 else:
-                    print("shape wrong")
+                    rospy.loginfo("shape wrong")
             except:
-                print("covariance exception")
+                rospy.loginfo("covariance exception")
         else:
-            print("wrong length of array")
+            rospy.logerr("wrong length of array")
 
     def _calc_ellipse(self, cov):
         """
