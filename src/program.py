@@ -52,7 +52,10 @@ class LocaliseRobot:
         return_vel.data = result
         return LocaliseResponse(return_vel)
         
-    def _do_localisation(self): 
+    def _do_localisation(self):
+        """
+        Performes the localisation behaviour
+        """
         # Initiate global localization, wherein all particles are dispersed randomly through the free space in the map.
         self.global_localisation()
 
